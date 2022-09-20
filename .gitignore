@@ -11,3 +11,9 @@ deploy
 *.pyc
 .vs/
 .vscode/
+.cproject
+.gitattributes
+.gitlab-ci.yml
+.project
+.settings
+.DS_Store
