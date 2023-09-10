@@ -69,7 +69,7 @@ static std::vector<UInt> writeAnnexB(std::ostream& out, const AccessUnit& au)
        *  - the byte stream NAL unit syntax structure contains the first NAL
        *    unit of an access unit in decoding order, as specified by subclause
        *    7.4.1.2.3.
-       */
+       */ // 第一个slice和vps、sps、pps界定符是4字节，其他的是3字节
       out.write(reinterpret_cast<const TChar*>(start_code_prefix), 4);
       size += 4;
     }

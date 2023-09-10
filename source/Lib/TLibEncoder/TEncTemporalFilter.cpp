@@ -221,7 +221,7 @@ Bool TEncTemporalFilter::filter(TComPicYuv *orgPic, Int receivedPoc)
       }
       srcPic.picBuffer.extendPicBorder();
       srcPic.mvs.allocate(m_sourceWidth / 4, m_sourceHeight / 4);
-
+      // 运动估计
       motionEstimation(srcPic.mvs, origPadded, srcPic.picBuffer, origSubsampled2, origSubsampled4);
       srcPic.origOffset = origOffset;
       origOffset++;
@@ -524,7 +524,7 @@ Void TEncTemporalFilter::motionEstimationLuma(Array2D<MotionVector> &mvs, const 
       }
       best.error = (Int) (20 * ((best.error + 5.0) / (variance + 5.0)) + (best.error / (blockSize * blockSize)) / 50);
 #endif
-      mvs.get(blockX / stepSize, blockY / stepSize) = best;
+      mvs.get(blockX / stepSize, blockY / stepSize) = best;// 每个8x8的块去寻找最优的运动向量
     }
   }
 }
@@ -546,7 +546,7 @@ Void TEncTemporalFilter::motionEstimation(Array2D<MotionVector> &mv, const TComP
   motionEstimationLuma(mv_0, origSubsampled4, bufferSub4, 16);
   motionEstimationLuma(mv_1, origSubsampled2, bufferSub2, 16, &mv_0, 2);
   motionEstimationLuma(mv_2, orgPic, buffer, 16, &mv_1, 2);
-
+  // 以8x8的block去找最合适的运动向量要花很多时间
   motionEstimationLuma(mv, orgPic, buffer, 8, &mv_2, 1, true);
 }
 

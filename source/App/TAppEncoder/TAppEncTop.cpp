@@ -892,14 +892,14 @@ Void TAppEncTop::rateStatsAccum(const AccessUnit& au, const std::vector<UInt>& a
     case NAL_UNIT_CODED_SLICE_BLA_W_LP:
     case NAL_UNIT_CODED_SLICE_BLA_W_RADL:
     case NAL_UNIT_CODED_SLICE_BLA_N_LP:
-    case NAL_UNIT_CODED_SLICE_IDR_W_RADL:
+    case NAL_UNIT_CODED_SLICE_IDR_W_RADL: // 通常大一些
     case NAL_UNIT_CODED_SLICE_IDR_N_LP:
     case NAL_UNIT_CODED_SLICE_CRA:
     case NAL_UNIT_CODED_SLICE_RADL_N:
     case NAL_UNIT_CODED_SLICE_RADL_R:
     case NAL_UNIT_CODED_SLICE_RASL_N:
     case NAL_UNIT_CODED_SLICE_RASL_R:
-    case NAL_UNIT_VPS:
+    case NAL_UNIT_VPS:                    // 这几个参数集一般不大，常规第一帧中是VPS、SPS、PPS、SLICE_IDR_W_RADL四部分
     case NAL_UNIT_SPS:
     case NAL_UNIT_PPS:
       m_essentialBytes += *it_stats;

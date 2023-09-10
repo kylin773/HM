@@ -1329,8 +1329,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       if ( pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_LP
         || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_W_RADL
         || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_BLA_N_LP
-        || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL
-        || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP
+        || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_W_RADL// IDR_W_RADL表示可能有RADL 图像（associated random access decodable leading (RADL) pictures）
+        || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_IDR_N_LP  //  IDR_N_LP表示没有leading picture
         || pcSlice->getNalUnitType() == NAL_UNIT_CODED_SLICE_CRA )  // IRAP picture
       {
         m_associatedIRAPType = pcSlice->getNalUnitType();
@@ -1744,7 +1744,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     if (writePS)
     {
       m_pcEncTop->setParamSetChanged(pcSlice->getSPS()->getSPSId(), pcSlice->getPPS()->getPPSId());
-    }
+    } // 写入vps、sps、pps到NALU中
     actualTotalBits += xWriteParameterSets(accessUnit, pcSlice, writePS);
 
     if (writePS)
@@ -1760,7 +1760,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       m_bSeqFirst = false;
     }
     if (m_pcCfg->getAccessUnitDelimiter())
-    {
+    {// 写入界定符
       xWriteAccessUnitDelimiter(accessUnit, pcSlice);
     }
 
@@ -1798,7 +1798,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
     }
 
-    // pcSlice is currently slice 0.
+    // pcSlice is currently slice 0. // VCL层是视频编码层、NAL是网络适配层对压缩后的数据划分和封装
     std::size_t binCountsInNalUnits   = 0; // For implementation of cabac_zero_word stuffing (section 7.4.3.10)
     std::size_t numBytesInVclNalUnits = 0; // For implementation of cabac_zero_word stuffing (section 7.4.3.10)
 
@@ -1851,14 +1851,14 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setCabacInitFlag(encCabacInitFlag);
 #endif
       tmpBitsBeforeWriting = m_pcEntropyCoder->getNumberOfWrittenBits();
-      m_pcEntropyCoder->encodeSliceHeader(pcSlice);
+      m_pcEntropyCoder->encodeSliceHeader(pcSlice); // 编码sliceHeader
       actualHeadBits += ( m_pcEntropyCoder->getNumberOfWrittenBits() - tmpBitsBeforeWriting );
 
       pcSlice->setFinalized(true);
 
       pcSlice->clearSubstreamSizes(  );
       {
-        UInt numBinsCoded = 0;
+        UInt numBinsCoded = 0; // 编码slice
         m_pcSliceEncoder->encodeSlice(pcPic, &(substreamsOut[0]), numBinsCoded);
         binCountsInNalUnits+=numBinsCoded;
       }
@@ -1934,7 +1934,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     m_pcCfg->setEncodedFlag(iGOPid, true);
 
     Double PSNR_Y;
-
+    // 内部计算重建的和原始的像素PSNR等数据
     xCalculateAddPSNRs( isField, isTff, iGOPid, pcPic, accessUnit, rcListPic, dEncTime, ip_conversion, snr_conversion, outputLogCtrl, &PSNR_Y );
     
     // Only produce the Green Metadata SEI message with the last picture.
@@ -2001,7 +2001,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     }
 #if REDUCED_ENCODER_MEMORY
 
-    pcPic->releaseReconstructionIntermediateData();
+    pcPic->releaseReconstructionIntermediateData(); // 释放当前帧重建的数据
     if (!isField) // don't release the source data for field-coding because the fields are dealt with in pairs. // TODO: release source data for interlace simulations.
     {
       pcPic->releaseEncoderSourceImageData();
@@ -2387,7 +2387,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
 
       Int   iSize   = iWidth*iHeight;
 
-      UInt64 uiSSDtemp=0;
+      UInt64 uiSSDtemp=0;// 光栅扫描，计算图像中每个原始像素和重建像素差值平方之和
       for(Int y = 0; y < iHeight; y++ )
       {
         for(Int x = 0; x < iWidth; x++ )
@@ -2440,7 +2440,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
     if ((*it)->m_nalUnitType != NAL_UNIT_PREFIX_SEI && (*it)->m_nalUnitType != NAL_UNIT_SUFFIX_SEI)
     {
       numRBSPBytes += numRBSPBytes_nal;
-      // add start code bytes (Annex B)
+      // add start code bytes (Annex B) I0(slice0)是序列第一帧的第一个slice，是当前Access Unit的首个nalu，所以是4字节头。
       if (it == accessUnit.begin() || (*it)->m_nalUnitType == NAL_UNIT_VPS || (*it)->m_nalUnitType == NAL_UNIT_SPS || (*it)->m_nalUnitType == NAL_UNIT_PPS)
       {
         numRBSPBytes += 4;
@@ -2511,7 +2511,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
          pcSlice->getSliceQp(),
          uibits );
 #endif
-
+  // 拿到PSNR等结果打印出来
   printf(" [Y %6.4lf dB    U %6.4lf dB    V %6.4lf dB]", result.psnr[COMPONENT_Y], result.psnr[COMPONENT_Cb], result.psnr[COMPONENT_Cr] );
 
   if (outputLogCtrl.printHexPerPOCPSNRs)
@@ -2547,7 +2547,7 @@ Void TEncGOP::xCalculateAddPSNR( TComPic* pcPic, TComPicYuv* pcPicD, const Acces
 
   for (Int iRefList = 0; iRefList < 2; iRefList++)
   {
-    printf(" [L%d ", iRefList);
+    printf(" [L%d ", iRefList); // POC为GOP内图像的显示顺序，打印参考帧的POC，有的话
     for (Int iRefIndex = 0; iRefIndex < pcSlice->getNumRefIdx(RefPicList(iRefList)); iRefIndex++)
     {
       printf ("%d ", pcSlice->getRefPOC(RefPicList(iRefList), iRefIndex)-pcSlice->getLastIDR());

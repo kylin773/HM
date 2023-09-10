@@ -793,7 +793,7 @@ Void TEncSampleAdaptiveOffset::decideBlkParams(TComPic* pic, Bool* sliceEnabled,
 
 
   Double totalCost = 0; // Used if bTestSAODisableAtPictureLevel==true
-
+  // 为每个CTU选择一个最合适的SAO模式，并保存对应的参数
   for(Int ctuRsAddr=0; ctuRsAddr< m_numCTUsPic; ctuRsAddr++)
   {
     if(allBlksDisabled)
@@ -874,7 +874,7 @@ Void TEncSampleAdaptiveOffset::decideBlkParams(TComPic* pic, Bool* sliceEnabled,
   {
     Int picTempLayer = pic->getSlice(0)->getDepth();
     Int numCtusForSAOOff[MAX_NUM_COMPONENT];
-
+    // 统计yuv三部分的CTU中分别有几个CTU不使用SAO
     for (Int compIdx = 0; compIdx < numberOfComponents; compIdx++)
     {
       numCtusForSAOOff[compIdx] = 0;

@@ -341,7 +341,7 @@ Void TEncEntropy::xEncodeTransform( Bool& bCodeDQP, Bool& codeChromaQpAdj, TComT
           codeChromaQpAdj = false;
         }
       }
-
+      // 对ycbcr三个通道的系数值符号和系数值都进行编码
       const UInt numValidComp=pcCU->getPic()->getNumberValidComponents();
 
       for(UInt ch=COMPONENT_Y; ch<numValidComp; ch++)
@@ -442,7 +442,7 @@ Void TEncEntropy::encodePredInfo( TComDataCU* pcCU, UInt uiAbsPartIdx )
       }
     }
   }
-  else                                                                // if it is Inter mode, encode motion vector and reference index
+  else                                                                // if it is Inter mode, encode motion vector and reference index // 帧间模式编码mv
   {
     encodePUWise( pcCU, uiAbsPartIdx );
   }
@@ -691,7 +691,7 @@ Void TEncEntropy::estimateBit (estBitsSbacStruct* pcEstBitsSbac, Int width, Int 
 
 Int TEncEntropy::countNonZeroCoeffs( TCoeff* pcCoef, UInt uiSize )
 {
-  Int count = 0;
+  Int count = 0; // pcCoef保存长度为uiSize的系数，遍历可以统计非0系数数量
 
   for ( Int i = 0; i < uiSize; i++ )
   {

@@ -113,7 +113,7 @@ Void TComOutputBitstream::write   ( UInt uiBits, UInt uiNumberOfBits )
   assert( uiNumberOfBits == 32 || (uiBits & (~0 << uiNumberOfBits)) == 0 );
 
   /* any modulo 8 remainder of num_total_bits cannot be written this time,
-   * and will be held until next time. */
+   * and will be held until next time. */ // 码流拼接过程，每次编8bits，将下次的bits记录下来
   UInt num_total_bits = uiNumberOfBits + m_num_held_bits;
   UInt next_num_held_bits = num_total_bits % 8;
 
@@ -125,7 +125,7 @@ Void TComOutputBitstream::write   ( UInt uiBits, UInt uiNumberOfBits )
    * if total_bits < 8, the value of v_ is not used */
   UChar next_held_bits = uiBits << (8 - next_num_held_bits);
 
-  if (!(num_total_bits >> 3))
+  if (!(num_total_bits >> 3)) // 至少8bits的时候才会写
   {
     /* insufficient bits accumulated to write out, append new_held_bits to
      * current held_bits */

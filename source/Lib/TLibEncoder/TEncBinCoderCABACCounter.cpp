@@ -108,7 +108,7 @@ Void TEncBinCABACCounter::encodeBin( UInt binValue, ContextModel &rcCtxModel )
 Void TEncBinCABACCounter::encodeBinEP( UInt /*binValue*/ )
 {
   m_uiBinsCoded += m_binCountIncrement;
-  m_fracBits += 32768;
+  m_fracBits += 32768; // 0x8000
 }
 
 /**

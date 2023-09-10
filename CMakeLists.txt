@@ -28,7 +28,7 @@ if( CMAKE_SYSTEM_NAME STREQUAL "Linux" )
 endif()
 
 set( EXTENSION_360_VIDEO OFF CACHE BOOL "If EXTENSION_360_VIDEO is on, 360Lib will be added" )
-set( SET_ENABLE_TRACING OFF CACHE BOOL "Set ENABLE_TRACING as a compiler flag" )
+set( SET_ENABLE_TRACING ON CACHE BOOL "Set ENABLE_TRACING as a compiler flag" )
 set( ENABLE_TRACING OFF CACHE BOOL "If SET_ENABLE_TRACING is on, it will be set to this value" )
 set( HIGH_BITDEPTH OFF CACHE BOOL "Build libraries and applications with high bit depth support" )
 
@@ -71,7 +71,7 @@ endif()
 bb_enable_warnings( gcc warnings-as-errors -Wno-sign-compare -Wno-class-memaccess)
 
 if( XCODE )
-  bb_enable_warnings( clang warnings-as-errors
+  bb_enable_warnings( clang
                             -Wno-deprecated-declarations
                             -Wno-unknown-attributes
                             -Wno-deprecated-register
@@ -79,7 +79,7 @@ if( XCODE )
                             -Wno-absolute-value
                             -Wno-unused-const-variable )
 else()
-  bb_enable_warnings( clang warnings-as-errors
+  bb_enable_warnings( clang 
                             -Wno-unknown-attributes
                             -Wno-deprecated-register
                             -Wno-pessimizing-move

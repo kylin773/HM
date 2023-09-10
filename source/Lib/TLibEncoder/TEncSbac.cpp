@@ -340,7 +340,7 @@ Void TEncSbac::xWriteCoefRemainExGolomb ( UInt symbol, UInt &rParam, const Bool 
   UInt length;
 
   if (codeNumber < (COEF_REMAIN_BIN_REDUCTION << rParam))
-  {
+  { //
     length = codeNumber>>rParam;
     m_pcBinIf->encodeBinsEP( (1<<(length+1))-2 , length+1);
     m_pcBinIf->encodeBinsEP((codeNumber%(1<<rParam)),rParam);
@@ -787,7 +787,7 @@ Void TEncSbac::codeMvd( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList
   const Int iHor = pcCUMvField->getMvd( uiAbsPartIdx ).getHor();
   const Int iVer = pcCUMvField->getMvd( uiAbsPartIdx ).getVer();
   ContextModel* pCtx = m_cCUMvdSCModel.get( 0 );
-
+  // 编码是不是不为0
   m_pcBinIf->encodeBin( iHor != 0 ? 1 : 0, *pCtx );
   m_pcBinIf->encodeBin( iVer != 0 ? 1 : 0, *pCtx );
 
@@ -796,7 +796,7 @@ Void TEncSbac::codeMvd( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList
   const UInt uiHorAbs   = 0 > iHor ? -iHor : iHor;
   const UInt uiVerAbs   = 0 > iVer ? -iVer : iVer;
   pCtx++;
-
+  // 编码绝对值是否大于1
   if( bHorAbsGr0 )
   {
     m_pcBinIf->encodeBin( uiHorAbs > 1 ? 1 : 0, *pCtx );
@@ -806,7 +806,7 @@ Void TEncSbac::codeMvd( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList
   {
     m_pcBinIf->encodeBin( uiVerAbs > 1 ? 1 : 0, *pCtx );
   }
-
+  // 编码绝对值减2指数哥伦布编码，以及等概率编码符号
   if( bHorAbsGr0 )
   {
     if( uiHorAbs > 1 )
@@ -1335,7 +1335,7 @@ Void TEncSbac::codeCoeffNxN( TComTU &rTu, TCoeff* pcCoef, const ComponentID comp
   } while ( uiNumSig > 0 );
 
   // Code position of last coefficient
-  Int posLastY = posLast >> uiLog2BlockWidth;
+   Int posLastY = posLast >> uiLog2BlockWidth;
   Int posLastX = posLast - ( posLastY << uiLog2BlockWidth );
   codeLastSignificantXY(posLastX, posLastY, uiWidth, uiHeight, compID, codingParameters.scanType);
 
@@ -1497,7 +1497,7 @@ Void TEncSbac::codeCoeffNxN( TComTU &rTu, TCoeff* pcCoef, const ComponentID comp
           if( absCoeff[ idx ] >= baseLevel)
           {
             const UInt escapeCodeValue = absCoeff[idx] - baseLevel;
-
+            // 编码系数绝对值
             xWriteCoefRemainExGolomb( escapeCodeValue, uiGoRiceParam, extendedPrecision, maxLog2TrDynamicRange );
 
             if (absCoeff[idx] > (3 << uiGoRiceParam))

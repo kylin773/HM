@@ -60,7 +60,9 @@ Void ContextModel::init( Int qp, Int initValue )
   Int  slope      = (initValue>>4)*5 - 45;
   Int  offset     = ((initValue&15)<<3)-16;
   Int  initState  =  min( max( 1, ( ( ( slope * qp ) >> 4 ) + offset ) ), 126 );
+  // mpstate表示MPS
   UInt mpState    = (initState >= 64 );
+  // m_ucState表示δ
   m_ucState       = ( (mpState? (initState - 64):(63 - initState)) <<1) + mpState;
 }
 

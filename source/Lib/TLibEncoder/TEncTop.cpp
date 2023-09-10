@@ -339,7 +339,7 @@ Void TEncTop::encode( Bool flush, TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvT
       ppsID=getdQPs()[ m_iPOCLast+1 ];
     }
     xGetNewPicBuffer( pcPicCurr, ppsID );
-    pcPicYuvOrg->copyToPic( pcPicCurr->getPicYuvOrg() );
+    pcPicYuvOrg->copyToPic( pcPicCurr->getPicYuvOrg() ); // 将ycbcr三个分量分别拷贝到pcPicCurr中，类似于深拷贝
     pcPicYuvTrueOrg->copyToPic( pcPicCurr->getPicYuvTrueOrg() );
 
 #if SHUTTER_INTERVAL_SEI_PROCESSING

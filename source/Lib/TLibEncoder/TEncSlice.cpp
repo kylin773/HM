@@ -817,10 +817,11 @@ Void TEncSlice::compressSlice( TComPic* pcPic, const Bool bCompressEntireSlice, 
       pCtu->getSlice()->setSliceQpBase( estQP );
 #endif
     }
-
-    // run CTU trial encoder
+    
+    // run CTU trial encoder 这里只是尝试，选出最优的熵编码方案
     m_pcCuEncoder->compressCtu( pCtu );
 
+      
 
     // All CTU decisions have now been made. Restore entropy coder to an initial stage, ready to make a true encode,
     // which will result in the state of the contexts being correct. It will also count up the number of bits coded,
@@ -832,8 +833,7 @@ Void TEncSlice::compressSlice( TComPic* pcPic, const Bool bCompressEntireSlice, 
     m_pppcRDSbacCoder[0][CI_CURR_BEST]->resetBits();
     pRDSbacCoder->setBinsCoded( 0 );
 
-    // encode CTU and calculate the true bit counters.
-    m_pcCuEncoder->encodeCtu( pCtu );
+    m_pcCuEncoder->encodeCtu( pCtu );  // encode CTU and calculate the true bit counters. 进行编码并计算bit计数器，其实也没开始真正的编码
 
 
     pRDSbacCoder->setBinCountingEnableFlag( false );
@@ -924,7 +924,7 @@ Void TEncSlice::compressSlice( TComPic* pcPic, const Bool bCompressEntireSlice, 
     m_uiPicTotalBits += pCtu->getTotalBits();
     m_dPicRdCost     += pCtu->getTotalCost();
     m_uiPicDist      += pCtu->getTotalDistortion();
-  }
+  }  // 结束对当前Slice中所有的CTU进行选择最合适熵编码方案并熵编码
 
 
   // store context state at the end of this slice-segment, in case the next slice is a dependent slice and continues using the CABAC contexts.
@@ -1081,7 +1081,7 @@ Void TEncSlice::encodeSlice   ( TComPic* pcPic, TComOutputBitstream* pcSubstream
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-      m_pcCuEncoder->encodeCtu( pCtu );
+      m_pcCuEncoder->encodeCtu( pCtu ); // 对CTU真正的编码
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
