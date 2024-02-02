@@ -323,7 +323,7 @@ Void TComCUMvField::setAllMvField( TComMvField const & mvField, PartSize eCUMode
   setAllRefIdx( mvField.getRefIdx(), eCUMode, iPartAddr, uiDepth, iPartIdx );
 }
 
-/**Subsampling of the stored prediction mode, reference index and motion vector
+/**Subsampling of the stored prediction mode, reference index and motion vector 对存储的预测模式、参考索引和运动向量进行二次采样
  * \param pePredMode Pointer to prediction modes
  * \param scale      Factor by which to subsample motion information
  */

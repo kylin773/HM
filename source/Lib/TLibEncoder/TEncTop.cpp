@@ -358,7 +358,7 @@ Void TEncTop::encode( Bool flush, TComPicYuv* pcPicYuvOrg, TComPicYuv* pcPicYuvT
   }
 
   if ((m_iNumPicRcvd == 0) || (!flush && (m_iPOCLast != 0) && (m_iNumPicRcvd != m_iGOPSize) && (m_iGOPSize != 0)))
-  {
+  { // 获取的帧达到了GOPsize才开始编码，否则这里会return回到上层
     iNumEncoded = 0;
     return;
   }

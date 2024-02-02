@@ -394,7 +394,7 @@ Void TEncSbac::xWriteCoefRemainExGolomb ( UInt symbol, UInt &rParam, const Bool 
 
 // SBAC RD
 Void  TEncSbac::load ( const TEncSbac* pSrc)
-{
+{ // 加载pSrc对象内容到当前对象
   this->xCopyFrom(pSrc);
 }
 
@@ -413,13 +413,13 @@ Void  TEncSbac::loadIntraDirMode( const TEncSbac* pSrc, const ChannelType chType
 
 
 Void  TEncSbac::store( TEncSbac* pDest) const
-{
+{ // 将当前对象状态保存到入参pDest中
   pDest->xCopyFrom( this );
 }
 
 
 Void TEncSbac::xCopyFrom( const TEncSbac* pSrc )
-{
+{ // 将入参的状态和上下文都拷贝到调用对象，相当于复制
   m_pcBinIf->copyState( pSrc->m_pcBinIf );
   xCopyContextsFrom(pSrc);
 }
@@ -431,7 +431,7 @@ Void TEncSbac::codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRef
 
   xWriteUnaryMaxSymbol(iSymbol, m_cMVPIdxSCModel.get(0), 1, iNum-1);
 }
-
+// 编码1:SIZE_2Nx2N，
 Void TEncSbac::codePartSize( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
 {
   PartSize eSize         = pcCU->getPartitionSize( uiAbsPartIdx );
@@ -525,7 +525,7 @@ Void TEncSbac::codePartSize( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
  */
 Void TEncSbac::codePredMode( TComDataCU* pcCU, UInt uiAbsPartIdx )
 {
-  // get context function is here
+  // get context function is here 帧内或者帧间
   m_pcBinIf->encodeBin( pcCU->isIntra( uiAbsPartIdx ) ? 1 : 0, m_cCUPredModeSCModel.get( 0, 0, 0 ) );
 }
 
@@ -746,7 +746,7 @@ Void TEncSbac::codeInterDir( TComDataCU* pcCU, UInt uiAbsPartIdx )
 }
 
 Void TEncSbac::codeRefFrmIdx( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList )
-{
+{// 编码参考帧序号，
   Int iRefFrame = pcCU->getCUMvField( eRefList )->getRefIdx( uiAbsPartIdx );
   ContextModel *pCtx = m_cCURefPicSCModel.get( 0 );
   m_pcBinIf->encodeBin( ( iRefFrame == 0 ? 0 : 1 ), *pCtx );
@@ -775,7 +775,7 @@ Void TEncSbac::codeRefFrmIdx( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eR
   }
   return;
 }
-
+// 编码运动矢量残差
 Void TEncSbac::codeMvd( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList )
 {
   if(pcCU->getSlice()->getMvdL1ZeroFlag() && eRefList == REF_PIC_LIST_1 && pcCU->getInterDir(uiAbsPartIdx)==3)
@@ -787,7 +787,7 @@ Void TEncSbac::codeMvd( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList
   const Int iHor = pcCUMvField->getMvd( uiAbsPartIdx ).getHor();
   const Int iVer = pcCUMvField->getMvd( uiAbsPartIdx ).getVer();
   ContextModel* pCtx = m_cCUMvdSCModel.get( 0 );
-  // 编码是不是不为0
+  // 编码水平和垂直分量是不是不为0
   m_pcBinIf->encodeBin( iHor != 0 ? 1 : 0, *pCtx );
   m_pcBinIf->encodeBin( iVer != 0 ? 1 : 0, *pCtx );
 
@@ -796,9 +796,9 @@ Void TEncSbac::codeMvd( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList
   const UInt uiHorAbs   = 0 > iHor ? -iHor : iHor;
   const UInt uiVerAbs   = 0 > iVer ? -iVer : iVer;
   pCtx++;
-  // 编码绝对值是否大于1
+  
   if( bHorAbsGr0 )
-  {
+  { // 编码水平MVD绝对值是否大于1
     m_pcBinIf->encodeBin( uiHorAbs > 1 ? 1 : 0, *pCtx );
   }
 
@@ -810,10 +810,10 @@ Void TEncSbac::codeMvd( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList
   if( bHorAbsGr0 )
   {
     if( uiHorAbs > 1 )
-    {
+    { // 大于1的话
       xWriteEpExGolomb( uiHorAbs-2, 1 );
     }
-
+    // 编码符号，大于0或小于0
     m_pcBinIf->encodeBinEP( 0 > iHor ? 1 : 0 );
   }
 
@@ -1177,7 +1177,7 @@ Void TEncSbac::codeLastSignificantXY( UInt uiPosX, UInt uiPosY, Int width, Int h
   }
 }
 
-
+// 编码具体的CTU中的CU的系数值了
 Void TEncSbac::codeCoeffNxN( TComTU &rTu, TCoeff* pcCoef, const ComponentID compID )
 {
   TComDataCU* pcCU=rTu.getCU();
@@ -1224,7 +1224,7 @@ Void TEncSbac::codeCoeffNxN( TComTU &rTu, TCoeff* pcCoef, const ComponentID comp
     exit(1);
   }
 
-  // compute number of significant coefficients
+  // compute number of significant coefficients 获取非零系数的数量
   UInt uiNumSig = TEncEntropy::countNonZeroCoeffs(pcCoef, uiWidth * uiHeight);
 
   if ( uiNumSig == 0 )
@@ -1309,7 +1309,7 @@ Void TEncSbac::codeCoeffNxN( TComTU &rTu, TCoeff* pcCoef, const ComponentID comp
 
   //----- encode significance map -----
 
-  // Find position of last coefficient
+  // Find position of last coefficient 找到最后一个系数
   Int scanPosLast = -1;
   Int posLast;
 
@@ -1332,9 +1332,9 @@ Void TEncSbac::codeCoeffNxN( TComTU &rTu, TCoeff* pcCoef, const ComponentID comp
 
       uiNumSig--;
     }
-  } while ( uiNumSig > 0 );
+  } while ( uiNumSig > 0 ); // 以一定的方式遍历，找到最后一个系数的位置，并用posLast表示
 
-  // Code position of last coefficient
+  // Code position of last coefficient 编码最后一个非零系数的位置
    Int posLastY = posLast >> uiLog2BlockWidth;
   Int posLastX = posLast - ( posLastY << uiLog2BlockWidth );
   codeLastSignificantXY(posLastX, posLastY, uiWidth, uiHeight, compID, codingParameters.scanType);
@@ -1405,10 +1405,10 @@ Void TEncSbac::codeCoeffNxN( TComTU &rTu, TCoeff* pcCoef, const ComponentID comp
           uiCtxSig  = TComTrQuant::getSigCtxInc( patternSigCtx, codingParameters, iScanPosSig, uiLog2BlockWidth, uiLog2BlockHeight, chType );
           m_pcBinIf->encodeBin( uiSig, baseCtx[ uiCtxSig ] );
         }
-        if( uiSig )
+        if( uiSig ) // 对于非零的系数，获取系数绝对值放入到absCoeff中，将符号放到coeffSigns中
         {
           absCoeff[ numNonZero ] = Int(abs( pcCoef[ uiBlkPos ] ));
-          coeffSigns = 2 * coeffSigns + ( pcCoef[ uiBlkPos ] < 0 );
+          coeffSigns = 2 * coeffSigns + ( pcCoef[ uiBlkPos ] < 0 ); // 左移一位加上当前符号
           numNonZero++;
           if( lastNZPosInCG == -1 )
           {
@@ -1436,7 +1436,7 @@ Void TEncSbac::codeCoeffNxN( TComTU &rTu, TCoeff* pcCoef, const ComponentID comp
       Int firstC2FlagIdx = -1;
       for( Int idx = 0; idx < numC1Flag; idx++ )
       {
-        UInt uiSymbol = absCoeff[ idx ] > 1;
+        UInt uiSymbol = absCoeff[ idx ] > 1; // 绝对值大于1的时候
         m_pcBinIf->encodeBin( uiSymbol, baseCtxMod[c1] );
         if( uiSymbol )
         {

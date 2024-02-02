@@ -723,7 +723,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, const 
           if(!( (rpcBestCU->getWidth(0)==8) && (rpcBestCU->getHeight(0)==8) ))
           {
             if( uiDepth == sps.getLog2DiffMaxMinCodingBlockSize() && doNotBlockPu)
-            {
+            { // xCheckRDCostInter函数主要是进行帧间搜索，计算当前CU划分模式的RDCost
               xCheckRDCostInter( rpcBestCU, rpcTempCU, SIZE_NxN DEBUG_STRING_PASS_INTO(sDebug)   );
               rpcTempCU->initEstData( uiDepth, iQP, bIsLosslessMode );
             }
@@ -972,7 +972,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, const 
   { // 到8x8深度为最深的8之后，不再进一步分割了
     // further split
     Double splitTotalCost = 0;
-
+    // 如果QP是一个区间，会一一遍历每个QP并找到一个最合适的QP
     for (Int iQP=iMinQP; iQP<=iMaxQP; iQP++)
     {
       const Bool bIsLosslessMode = false; // False at this level. Next level down may set it to true.
@@ -1008,7 +1008,7 @@ Void TEncCu::xCompressCU( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, const 
           }
           else
           {
-
+            // 递归调用下一深度
             xCompressCU( pcSubBestPartCU, pcSubTempPartCU, uhNextDepth DEBUG_STRING_PASS_INTO(sChild), rpcBestCU->getPartitionSize(0) );
           }
           DEBUG_STRING_APPEND(sTempDebug, sChild)
@@ -1242,7 +1242,7 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
     {
       setCodeChromaQpAdjFlag(true);
     }
-
+    // 一个CTU分为了四个，分别编码CU
     for ( UInt uiPartUnitIdx = 0; uiPartUnitIdx < 4; uiPartUnitIdx++, uiAbsPartIdx+=uiQNumParts )
     {
       uiLPelX   = pcCU->getCUPelX() + g_auiRasterToPelX[ g_auiZscanToRaster[uiAbsPartIdx] ];
@@ -1297,10 +1297,10 @@ Void TEncCu::xEncodeCU( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth )
     }
   }
 
-  // prediction Info ( Intra : direction mode, Inter : Mv, reference idx )
+  // prediction Info ( Intra : direction mode, Inter : Mv, reference idx )，帧内编码方向模式，帧间编码运动矢量和参考下标
   m_pcEntropyCoder->encodePredInfo( pcCU, uiAbsPartIdx );
 
-  // Encode Coefficients
+  // Encode Coefficients 这里编码系数值
   Bool bCodeDQP = getdQPFlag();
   Bool codeChromaQpAdj = getCodeChromaQpAdjFlag();
   m_pcEntropyCoder->encodeCoeff( pcCU, uiAbsPartIdx, uiDepth, bCodeDQP, codeChromaQpAdj );
@@ -1482,7 +1482,7 @@ Void TEncCu::xCheckRDCostMerge2Nx2N( TComDataCU*& rpcBestCU, TComDataCU*& rpcTem
   DEBUG_STRING_NEW(bestStr)
 
   for( UInt uiNoResidual = 0; uiNoResidual < iteration; ++uiNoResidual )
-  {
+  { // 对候选列表的CU进行遍历选择最优
     for( UInt uiMergeCand = 0; uiMergeCand < numValidMergeCand; ++uiMergeCand )
     {
       if(!(uiNoResidual==1 && mergeCandBuffer[uiMergeCand]==1))
@@ -1510,7 +1510,7 @@ Void TEncCu::xCheckRDCostMerge2Nx2N( TComDataCU*& rpcBestCU, TComDataCU*& rpcTem
 #endif
           // do MC
           m_pcPredSearch->motionCompensation ( rpcTempCU, m_ppcPredYuvTemp[uhDepth] );
-          // estimate residual and encode everything
+          // estimate residual and encode everything 估计残差并对一切进行编码
           m_pcPredSearch->encodeResAndCalcRdInterCU( rpcTempCU,
                                                      m_ppcOrigYuv    [uhDepth],
                                                      m_ppcPredYuvTemp[uhDepth],
@@ -1609,7 +1609,7 @@ Void TEncCu::xCheckRDCostInter( TComDataCU*& rpcBestCU, TComDataCU*& rpcTempCU, 
 #if AMP_MRG
   rpcTempCU->setMergeAMP (true);
   m_pcPredSearch->predInterSearch ( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth] DEBUG_STRING_PASS_INTO(sTest), false, bUseMRG );
-#else
+#else// 运动估计和运动补偿
   m_pcPredSearch->predInterSearch ( rpcTempCU, m_ppcOrigYuv[uhDepth], m_ppcPredYuvTemp[uhDepth], m_ppcResiYuvTemp[uhDepth], m_ppcRecoYuvTemp[uhDepth] );
 #endif
 

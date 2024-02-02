@@ -51,7 +51,7 @@
 #define IF_INTERNAL_OFFS (1<<(IF_INTERNAL_PREC-1)) ///< Offset used internally
 
 /**
- * \brief Interpolation filter class
+ * \brief Interpolation filter class 差值滤波器类
  */
 class TComInterpolationFilter
 {

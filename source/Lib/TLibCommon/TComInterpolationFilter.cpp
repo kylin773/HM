@@ -258,7 +258,7 @@ Void TComInterpolationFilter::filterCopy(Int bitDepth, const Pel *src, Int srcSt
 }
 
 /**
- * \brief Apply FIR filter to a block of samples
+ * \brief Apply FIR filter to a block of samples 将FIR滤波器应用于样本块，将插值后的像素块放入dst
  *
  * \tparam N          Number of taps
  * \tparam isVertical Flag indicating filtering along vertical direction
@@ -271,7 +271,7 @@ Void TComInterpolationFilter::filterCopy(Int bitDepth, const Pel *src, Int srcSt
  * \param  dstStride  Stride of destination samples
  * \param  width      Width of block
  * \param  height     Height of block
- * \param  coeff      Pointer to filter taps
+ * \param  coeff      Pointer to filter taps 滤波器系数，类型为short
  */
 template<Int N, Bool isVertical, Bool isFirst, Bool isLast>
 Void TComInterpolationFilter::filter(Int bitDepth, Pel const *src, Int srcStride, Pel *dst, Int dstStride, Int width, Int height, TFilterCoeff const *coeff)
@@ -568,7 +568,7 @@ Void TComInterpolationFilter::filterVer(Int bitDepth, Pel *src, Int srcStride, P
  * \param  dstStride  Stride of destination samples
  * \param  width      Width of block
  * \param  height     Height of block
- * \param  frac       Fractional sample offset
+ * \param  frac       Fractional sample offset 样本偏移
  * \param  isLast     Flag indicating whether it is the last filtering operation
  * \param  fmt        Chroma format
  * \param  bitDepth   Bit depth
@@ -576,7 +576,7 @@ Void TComInterpolationFilter::filterVer(Int bitDepth, Pel *src, Int srcStride, P
 Void TComInterpolationFilter::filterHor(const ComponentID compID, Pel *src, Int srcStride, Pel *dst, Int dstStride, Int width, Int height, Int frac, Bool isLast, const ChromaFormat fmt, const Int bitDepth )
 {
   if ( frac == 0 )
-  {
+  { // 将src中的srcStride样本偏移拷贝到dstStride的样本偏移的dst
     filterCopy(bitDepth, src, srcStride, dst, dstStride, width, height, true, isLast );
   }
   else if (isLuma(compID))

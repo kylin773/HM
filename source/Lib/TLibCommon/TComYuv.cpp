@@ -390,11 +390,11 @@ Void TComYuv::addAvg( const TComYuv* pcYuvSrc0, const TComYuv* pcYuvSrc1, const 
       }
     }
     else
-    {
+    { // 将所有的相加值遍历放到dst中
       for ( Int y = 0; y < iHeight; y++ )
       {
         for (Int x=0 ; x < iWidth; x+=4 )
-        {
+        { // clipbd函数是将值收敛到指定区间中，超过上界则收敛为上界，避免溢出
           pDst[ x + 0 ] = ClipBD( rightShift(( pSrc0[ x + 0 ] + pSrc1[ x + 0 ] + offset ), shiftNum), clipbd );
           pDst[ x + 1 ] = ClipBD( rightShift(( pSrc0[ x + 1 ] + pSrc1[ x + 1 ] + offset ), shiftNum), clipbd );
           pDst[ x + 2 ] = ClipBD( rightShift(( pSrc0[ x + 2 ] + pSrc1[ x + 2 ] + offset ), shiftNum), clipbd );

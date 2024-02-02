@@ -273,7 +273,7 @@ Void TEncEntropy::xEncodeTransform( Bool& bCodeDQP, Bool& codeChromaQpAdj, TComT
 
   const UInt uiTrDepthCurr = uiDepth - pcCU->getDepth( uiAbsPartIdx );
   const Bool bFirstCbfOfCU = uiTrDepthCurr == 0;
-
+  // 这里只遍历了cbcr，调用codeQtCbf
   for(UInt ch=COMPONENT_Cb; ch<numValidComponent; ch++)
   {
     const ComponentID compID=ComponentID(ch);
@@ -356,7 +356,7 @@ Void TEncEntropy::xEncodeTransform( Bool& bCodeDQP, Bool& codeChromaQpAdj, TComT
             printf("Call NxN for chan %d width=%d height=%d cbf=%d\n", compID, rTu.getRect(compID).width, rTu.getRect(compID).height, 1);
           }
 #endif
-
+          // 如果当前CTU的TU宽高不相等，需要遍历nextSection分别编码
           if (rTu.getRect(compID).width != rTu.getRect(compID).height)
           {
             //code two sub-TUs
@@ -485,9 +485,9 @@ Void TEncEntropy::encodePUWise( TComDataCU* pcCU, UInt uiAbsPartIdx )
       for ( UInt uiRefListIdx = 0; uiRefListIdx < 2; uiRefListIdx++ )
       {
         if ( pcCU->getSlice()->getNumRefIdx( RefPicList( uiRefListIdx ) ) > 0 )
-        {
+        { // 以下编码信息可以获取运动矢量残差的水平和垂直分量值
           encodeRefFrmIdxPU ( pcCU, uiSubPartIdx, RefPicList( uiRefListIdx ) );
-          encodeMvdPU       ( pcCU, uiSubPartIdx, RefPicList( uiRefListIdx ) );
+          encodeMvdPU       ( pcCU, uiSubPartIdx, RefPicList( uiRefListIdx ) ); // 编码运动矢量残差
           encodeMVPIdxPU    ( pcCU, uiSubPartIdx, RefPicList( uiRefListIdx ) );
 #if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
           if (bDebugPred)
@@ -639,7 +639,7 @@ Void TEncEntropy::encodeCoeff( TComDataCU* pcCU, UInt uiAbsPartIdx, UInt uiDepth
       return;
     }
   }
-
+  // 一个CU里面的TU递归器
   TComTURecurse tuRecurse(pcCU, uiAbsPartIdx, uiDepth);
 #if ENVIRONMENT_VARIABLE_DEBUG_AND_TEST
   if (bDebugRQT)

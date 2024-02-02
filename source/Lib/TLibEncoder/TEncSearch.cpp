@@ -2949,7 +2949,7 @@ Void TEncSearch::xRestrictBipredMergeCand( TComDataCU* pcCU, UInt puIdx, TComMvF
   }
 }
 
-//! search of the best candidate for inter prediction
+//! search of the best candidate for inter prediction // 运动估计ME和运动补偿MC，正常的MC流程是，遍历全部的參考帧，进行ME（运动预计：xEstimateMvPredAMVP和xMotionEstimation）,然后记录MVP或者MV的信息，进行MC（运动补偿，目的是选出最优的參数）。然后更新最优的參数，遍历全然部的參考帧之后。就选出了最优的參数了；然后循环结束。接着进行正式的MC（运动补偿）。
 #if AMP_MRG
 Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* pcPredYuv, TComYuv* pcResiYuv, TComYuv* pcRecoYuv DEBUG_STRING_FN_DECLARE(sDebug), Bool bUseRes, Bool bUseMRG )
 #else
@@ -3013,7 +3013,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
   TComMvField cMvFieldNeighbours[MRG_MAX_NUM_CANDS << 1]; // double length for mv of both lists
   UChar uhInterDirNeighbours[MRG_MAX_NUM_CANDS];
   Int numValidMergeCand = 0 ;
-
+  // 遍历当前CU下的全部PU
   for ( Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++ )
   {
     Distortion   uiCost[2] = { std::numeric_limits<Distortion>::max(), std::numeric_limits<Distortion>::max() };
@@ -3035,9 +3035,9 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
     Int          refIdxValidList1 = 0;
     UInt         bitsValidList1 = MAX_UINT;
     Distortion   costValidList1 = std::numeric_limits<Distortion>::max();
-
+    // 得到某种模式下CU块的比特数
     xGetBlkBits( ePartSize, pcCU->getSlice()->isInterP(), iPartIdx, uiLastMode, uiMbBits);
-
+    // 得到当前PU的索引和大小
     pcCU->getPartIndexAndSize( iPartIdx, uiPartAddr, iRoiWidth, iRoiHeight );
 
 #if AMP_MRG
@@ -3051,12 +3051,12 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
     if (bTestNormalMC)
     {
 #endif
-
-    //  Uni-directional prediction
+    // 遍历两个參考图像列表（假设是P帧。仅仅參考一个列表；假设是B帧。会參考两个列表），过这里就找到了应该使用哪个參考帧以及以及相应的MV
+    //  Uni-directional prediction 单向预测
     for ( Int iRefList = 0; iRefList < iNumPredDir; iRefList++ )
     {
       RefPicList  eRefPicList = ( iRefList ? REF_PIC_LIST_1 : REF_PIC_LIST_0 );
-
+      // 遍历参考列表的全部参考帧
       for ( Int iRefIdxTemp = 0; iRefIdxTemp < pcCU->getSlice()->getNumRefIdx(eRefPicList); iRefIdxTemp++ )
       {
         uiBitsTemp = uiMbBits[iRefList];
@@ -3112,7 +3112,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
           uiCostTempL0[iRefIdxTemp] = uiCostTemp;
           uiBitsTempL0[iRefIdxTemp] = uiBitsTemp;
         }
-        if ( uiCostTemp < uiCost[iRefList] )
+        if ( uiCostTemp < uiCost[iRefList] ) // 损失比较小的话替换一些运动矢量
         {
           uiCost[iRefList] = uiCostTemp;
           uiBits[iRefList] = uiBitsTemp; // storing for bi-prediction
@@ -3134,7 +3134,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
       }
     }
 
-    //  Bi-predictive Motion estimation
+    //  Bi-predictive Motion estimation 双向预测，假设是B帧且isBipredRestriction（用来推断当前PU尺寸是否为8，并且划分模式是不是2Nx2N），那么进入
     if ( (pcCU->getSlice()->isInterB()) && (pcCU->isBipredRestriction(iPartIdx) == false) )
     {
 
@@ -3145,7 +3145,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
       ::memcpy(aaiMvpIdxBi, aaiMvpIdx, sizeof(aaiMvpIdx));
 
       UInt uiMotBits[2];
-
+      // GPB预測结构是指对传统P帧採取类似于B帧的双向预測方式进行预測，MvdL1ZeroFlag是一个和GPB技术相关的标志。假设它为true，那么表示使用GPB技术
       if(pcCU->getSlice()->getMvdL1ZeroFlag())
       {
         xCopyAMVPInfo(&aacAMVPInfo[1][bestBiPRefIdxL1], pcCU->getCUMvField(REF_PIC_LIST_1)->getAMVPInfo());
@@ -3233,7 +3233,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
 
         iRefStart = 0;
         iRefEnd   = pcCU->getSlice()->getNumRefIdx(eRefPicList)-1;
-
+        // 遍历参考列表的全部参考帧进行运动估计
         for ( Int iRefIdxTemp = iRefStart; iRefIdxTemp <= iRefEnd; iRefIdxTemp++ )
         {
           uiBitsTemp = uiMbBits[2] + uiMotBits[1-iRefList];
@@ -3251,7 +3251,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
 
           xCopyAMVPInfo(&aacAMVPInfo[iRefList][iRefIdxTemp], pcCU->getCUMvField(eRefPicList)->getAMVPInfo());
           xCheckBestMVP(pcCU, eRefPicList, cMvTemp[iRefList][iRefIdxTemp], cMvPredBi[iRefList][iRefIdxTemp], aaiMvpIdxBi[iRefList][iRefIdxTemp], uiBitsTemp, uiCostTemp);
-
+          // 假设找到一个代价更小的方式则更新
           if ( uiCostTemp < uiCostBi )
           {
             bChanged = true;
@@ -3375,7 +3375,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
 #if AMP_MRG
     } // end if bTestNormalMC
 #endif
-
+    // 假设切割类型不是2Nx2N，即一个CU会被划分成为多个PU，那么应该计算并合并它们的运动预计代价
     if ( pcCU->getPartitionSize( uiPartAddr ) != SIZE_2Nx2N )
     {
       UInt uiMRGInterDir = 0;
@@ -3448,7 +3448,7 @@ Void TEncSearch::predInterSearch( TComDataCU* pcCU, TComYuv* pcOrgYuv, TComYuv* 
     }
 #endif
 
-    //  MC
+    //  MC，运动补偿
     motionCompensation ( pcCU, pcPredYuv, REF_PIC_LIST_X, iPartIdx );
 
   } //  end of for ( Int iPartIdx = 0; iPartIdx < iNumPart; iPartIdx++ )
@@ -3633,7 +3633,7 @@ Void TEncSearch::xCopyAMVPInfo (AMVPInfo* pSrc, AMVPInfo* pDst)
     pDst->m_acMvCand[i] = pSrc->m_acMvCand[i];
   }
 }
-
+// 选择最优MVP
 Void TEncSearch::xCheckBestMVP ( TComDataCU* pcCU, RefPicList eRefPicList, TComMv cMv, TComMv& rcMvPred, Int& riMVPIdx, UInt& ruiBits, Distortion& ruiCost )
 {
   AMVPInfo* pcAMVPInfo = pcCU->getCUMvField(eRefPicList)->getAMVPInfo();
@@ -3739,7 +3739,7 @@ Distortion TEncSearch::xGetTemplateCost( TComDataCU* pcCU,
   return uiCost;
 }
 
-
+// 当前像素块在参考图像中找到匹配块的过程
 Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPartIdx, RefPicList eRefPicList, TComMv* pcMvPred, Int iRefIdxPred, TComMv& rcMv, UInt& ruiBits, Distortion& ruiCost, Bool bBi  )
 {
   UInt          uiPartAddr;
@@ -3826,9 +3826,9 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   m_pcRdCost->setCostScale  ( 2 );
 
   setWpScalingDistParam( pcCU, iRefIdxPred, eRefPicList );
-  //  Do integer search
+  //  Do integer search 整像素搜索xPatternSearch、xPatternSearchFast，整像素搜索后会得到一个整像素单位的最优MV，这个MV值作为新的起始点进行亚像素搜索。亚像素搜索中先后又进行了1/2像素搜索，找到1/2像素单位的最优MV作为起始点，进行1/4像素搜索，最终得到了1/4像素单位的最优MV。最终得到的有用数据是1/4像素单位的MV和对应的参考帧索引。
   if ( (m_motionEstimationSearchMethod==MESEARCH_FULL) || bBi )
-  {
+  { // cMvSrchRngLT cMvSrchRngRB规定搜索范围
     xPatternSearch      ( &cPattern, piRefY, iRefStride, &cMvSrchRngLT, &cMvSrchRngRB, rcMv, ruiCost );
   }
   else
@@ -3850,7 +3850,7 @@ Void TEncSearch::xMotionEstimation( TComDataCU* pcCU, TComYuv* pcYuvOrg, Int iPa
   m_pcRdCost->setCostScale ( 1 );
 
   const Bool bIsLosslessCoded = pcCU->getCUTransquantBypass(uiPartAddr) != 0;
-  xPatternSearchFracDIF( bIsLosslessCoded, &cPattern, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost );
+  xPatternSearchFracDIF( bIsLosslessCoded, &cPattern, piRefY, iRefStride, &rcMv, cMvHalf, cMvQter, ruiCost ); // 亚像素搜索
 
   m_pcRdCost->setCostScale( 0 );
   rcMv <<= 2;
@@ -3961,7 +3961,7 @@ Void TEncSearch::xPatternSearch( const TComPattern* const pcPatternKey,
   Int         iBestX = 0;
   Int         iBestY = 0;
 
-  //-- jclee for using the SAD function pointer
+  //-- jclee for using the SAD function pointer SAD是绝对差和
   m_pcRdCost->setDistParam( pcPatternKey, piRefY, iRefStride,  m_cDistParam );
 
   // fast encoder decision: use subsampled SAD for integer ME
@@ -3972,7 +3972,7 @@ Void TEncSearch::xPatternSearch( const TComPattern* const pcPatternKey,
       m_cDistParam.iSubShift = 1;
     }
   }
-
+  // 以下的原理是遍历范围内的块，步长为1，找到一个绝对差和最小的块作为最优MV
   piRefY += (iSrchRngVerTop * iRefStride);
   for ( Int y = iSrchRngVerTop; y <= iSrchRngVerBottom; y++ )
   {
@@ -3984,7 +3984,7 @@ Void TEncSearch::xPatternSearch( const TComPattern* const pcPatternKey,
       setDistParamComp(COMPONENT_Y);
 
       m_cDistParam.bitDepth = pcPatternKey->getBitDepthY();
-      uiSad = m_cDistParam.DistFunc( &m_cDistParam );
+      uiSad = m_cDistParam.DistFunc( &m_cDistParam ); // m_cDistParam中的pOrg和pCur指向两个像素块
 
       // motion cost
       uiSad += m_pcRdCost->getCostOfVectorWithPredictor( x, y );
@@ -3999,7 +3999,7 @@ Void TEncSearch::xPatternSearch( const TComPattern* const pcPatternKey,
     }
     piRefY += iRefStride;
   }
-
+  // 拿到最优的运动向量，以及最小的代价（绝对差和）
   rcMv.set( iBestX, iBestY );
 
   ruiSAD = uiSadBest - m_pcRdCost->getCostOfVectorWithPredictor( iBestX, iBestY );
@@ -4565,7 +4565,7 @@ Void TEncSearch::xPatternSearchFracDIF(
 #endif
 
   //  Half-pel refinement
-  xExtDIFUpSamplingH ( &cPatternRoi );
+  xExtDIFUpSamplingH ( &cPatternRoi ); // 1/2位置像素上采样
 
   rcMvHalf = *pcMvInt;   rcMvHalf <<= 1;    // for mv-cost
   TComMv baseRefMv(0, 0);
@@ -4573,7 +4573,7 @@ Void TEncSearch::xPatternSearchFracDIF(
 
   m_pcRdCost->setCostScale( 0 );
 
-  xExtDIFUpSamplingQ ( &cPatternRoi, rcMvHalf );
+  xExtDIFUpSamplingQ ( &cPatternRoi, rcMvHalf ); // 1/4位置像素上采样
   baseRefMv = rcMvHalf;
   baseRefMv <<= 1;
 
@@ -4646,7 +4646,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU( TComDataCU* pcCU, TComYuv* pcYuvOrg,
   }
 
   //  Residual coding.
-
+  // 内部将pcYuvOrg的值减去pcYuvPred，得到残差pcYuvResi
    pcYuvResi->subtract( pcYuvOrg, pcYuvPred, 0, cuWidthPixels );
 
   TComTURecurse tuLevel0(pcCU, 0);
@@ -4657,7 +4657,7 @@ Void TEncSearch::encodeResAndCalcRdInterCU( TComDataCU* pcCU, TComYuv* pcYuvOrg,
   Distortion zeroDistortion    = 0;
 
   m_pcRDGoOnSbacCoder->load( m_pppcRDSbacCoder[ pcCU->getDepth( 0 ) ][ CI_CURR_BEST ] );
-
+  // 该函数需要关注下，内部有调用dct或dst
   xEstimateInterResidualQT( pcYuvResi,  nonZeroCost, nonZeroBits, nonZeroDistortion, &zeroDistortion, tuLevel0 DEBUG_STRING_PASS_INTO(sDebug) );
 
   // -------------------------------------------------------
@@ -4944,7 +4944,7 @@ Void TEncSearch::xEstimateInterResidualQT( TComYuv    *pcResi,
                                           currAbsSum, cQP);
               }
               else
-              {
+              { // currentCoefficients存放量化后系数
                 m_pcTrQuant->transformNxN(TUIterator, compID, pcResi->getAddrPix( compID, tuCompRect.x0, tuCompRect.y0 ), pcResi->getStride(compID), currentCoefficients,
 #if ADAPTIVE_QP_SELECTION
                                           currentARLCoefficients,
@@ -5010,12 +5010,12 @@ Void TEncSearch::xEstimateInterResidualQT( TComYuv    *pcResi,
                 {
                   m_pcEntropyCoder->encodeCrossComponentPrediction( TUIterator, compID );
                 }
-
+                // 这里编码量化后的系数的意义是？获取编码该块的比特数吗？
                 m_pcEntropyCoder->encodeCoeffNxN( TUIterator, currentCoefficients, compID );
                 currCompBits = m_pcEntropyCoder->getNumberOfWrittenBits();
 
                 pcResiCurrComp = m_pcQTTempTComYuv[uiQTTempAccessLayer].getAddrPix( compID, tuCompRect.x0, tuCompRect.y0 );
-
+                // 逆量化、DCT变换 currentCoefficients，得到像素值pcResiCurrComp，PSFTODO这里pcResiCurrComp是像素值还是量化和反量化变化后的残差？还是需要理解下
                 m_pcTrQuant->invTransformNxN( TUIterator, compID, pcResiCurrComp, m_pcQTTempTComYuv[uiQTTempAccessLayer].getStride(compID), currentCoefficients, cQP DEBUG_STRING_PASS_INTO_OPTIONAL(&sSingleStringTest, (DebugOptionList::DebugString_InvTran.getInt()&debugPredModeMask)) );
 
                 if (bUseCrossCPrediction)
@@ -5638,7 +5638,7 @@ Void  TEncSearch::xAddSymbolBitsInter( TComDataCU* pcCU, UInt& ruiBits )
 
 
 /**
- * \brief Generate half-sample interpolated block
+ * \brief Generate half-sample interpolated block 生成半采样的差值块
  *
  * \param pattern Reference picture ROI
  * \param biPred    Flag indicating whether block is for biprediction
@@ -5648,7 +5648,7 @@ Void TEncSearch::xExtDIFUpSamplingH( TComPattern* pattern )
   Int width      = pattern->getROIYWidth();
   Int height     = pattern->getROIYHeight();
   Int srcStride  = pattern->getPatternLStride();
-
+  // 由于亚像素位置是没有值的，因此就需要对参考图像进行插值，得到了整像素、1/2、1/4像素位置的图像，存放在了m_filteredBlock[4][4]中
   Int intStride = m_filteredBlockTmp[0].getStride(COMPONENT_Y);
   Int dstStride = m_filteredBlock[0][0].getStride(COMPONENT_Y);
   Pel *intPtr;

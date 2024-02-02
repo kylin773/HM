@@ -639,7 +639,7 @@ Void TComPrediction::xPredInterBi ( TComDataCU* pcCU, UInt uiPartAddr, Int iWidt
  * \param  bitDepth  Bit depth
  */
 
-
+// 生成运动补偿块
 Void TComPrediction::xPredInterBlk(const ComponentID compID, TComDataCU *cu, TComPicYuv *refPic, UInt partAddr, TComMv *mv, Int width, Int height, TComYuv *dstPic, Bool bi, const Int bitDepth )
 {
   Int     refStride  = refPic->getStride(compID);

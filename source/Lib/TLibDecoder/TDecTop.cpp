@@ -840,7 +840,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
   // Initialize entropy decoder
   m_cEntropyDecoder.setEntropyDecoder (&m_cCavlcDecoder);
   m_cEntropyDecoder.setBitstream      (&(nalu.getBitstream()));
-
+  // 一般一开始解码到VPS、SPS、PPS，解码完对应参数集之后存到内存中，后面解码的时候需要用到。
   switch (nalu.m_nalUnitType)
   {
     case NAL_UNIT_VPS:
@@ -887,7 +887,7 @@ Bool TDecTop::decode(InputNALUnit& nalu, Int& iSkipFrame, Int& iPOCLastDisplay)
     case NAL_UNIT_CODED_SLICE_RADL_R:
     case NAL_UNIT_CODED_SLICE_RASL_N:
     case NAL_UNIT_CODED_SLICE_RASL_R:
-#if MCTS_EXTRACTION
+#if MCTS_EXTRACTION // 开始解码
       return xDecodeSlice(nalu, iSkipFrame, iPOCLastDisplay, bSkipCabacAndReconstruction);
 #else
       return xDecodeSlice(nalu, iSkipFrame, iPOCLastDisplay);

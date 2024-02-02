@@ -335,7 +335,7 @@ Void TComSampleAdaptiveOffset::offsetBlock(const Int channelBitDepth, Int typeId
 
   const Int maxSampleValueIncl = (1<< channelBitDepth )-1;
 
-  Int x,y, startX, startY, endX, endY, edgeType;
+  Int x,y, startX, startY, endX, endY, edgeType; // edgeType
   Int firstLineStartX, firstLineEndX, lastLineStartX, lastLineEndX;
   SChar signLeft, signRight, signDown;
 
@@ -569,7 +569,7 @@ Void TComSampleAdaptiveOffset::offsetCTU(Int ctuRsAddr, TComPicYuv* srcYuv, TCom
     return;
   }
 
-  //block boundary availability
+  //block boundary availability 块边界可用性？不懂什么意思
   pPic->getPicSym()->deriveLoopFilterBoundaryAvailibility(ctuRsAddr, isLeftAvail,isRightAvail,isAboveAvail,isBelowAvail,isAboveLeftAvail,isAboveRightAvail,isBelowLeftAvail,isBelowRightAvail);
 
   Int yPos   = (ctuRsAddr / m_numCTUInWidth)*m_maxCUHeight;
@@ -597,7 +597,7 @@ Void TComSampleAdaptiveOffset::offsetCTU(Int ctuRsAddr, TComPicYuv* srcYuv, TCom
 
       Int  resStride  = resYuv->getStride(component);
       Pel* resBlk     = resYuv->getAddr(component) + blkYPos*resStride + blkXPos;
-
+      // 对重建像素块的一个颜色分量进行补偿
       offsetBlock( pPic->getPicSym()->getSPS().getBitDepth(toChannelType(component)), ctbOffset.typeIdc, ctbOffset.offset
                   , srcBlk, resBlk, srcStride, resStride, blkWidth, blkHeight
                   , isLeftAvail, isRightAvail

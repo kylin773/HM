@@ -153,7 +153,7 @@ Void TAppDecTop::decode()
 #endif
 
   while (!!bitstreamFile)
-  {
+  { // 总结：读进比特流，按nalu一个一个解码
     /* location serves to work around a design fault in the decoder, whereby
      * the process of reading a new slice that is the first slice of a new frame
      * requires the TDecTop::decode() method to be called again with the same

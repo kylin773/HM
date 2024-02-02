@@ -487,7 +487,7 @@ Void TEncSampleAdaptiveOffset::deriveOffsets(ComponentID compIdx, const Int chan
 
   // adjust offsets
   switch(typeIdc)
-  {
+  {// 三像素，水平、垂直、135、45度方向四种模式，只是选取的参考像素不同
     case SAO_TYPE_EO_0:
     case SAO_TYPE_EO_90:
     case SAO_TYPE_EO_135:
@@ -753,7 +753,7 @@ Void TEncSampleAdaptiveOffset::deriveModeMergeRDO(const BitDepths &bitDepths, In
 
     }
 
-    //rate
+    //rate 写入的比特数
     m_pcRDGoOnSbacCoder->load(cabacCoderRDO[inCabacLabel]);
     m_pcRDGoOnSbacCoder->resetBits();
     m_pcRDGoOnSbacCoder->codeSAOBlkParam(testBlkParam, bitDepths, sliceEnabled, (mergeList[SAO_MERGE_LEFT]!= NULL), (mergeList[SAO_MERGE_ABOVE]!= NULL), false);
@@ -801,7 +801,7 @@ Void TEncSampleAdaptiveOffset::decideBlkParams(TComPic* pic, Bool* sliceEnabled,
       codedParams[ctuRsAddr].reset();
       continue;
     }
-
+    // store和load操作类似状态机，上下文切换·
     m_pcRDGoOnSbacCoder->store(m_pppcRDSbacCoder[ SAO_CABACSTATE_BLK_CUR ]);
 
     //get merge list
@@ -836,7 +836,7 @@ Void TEncSampleAdaptiveOffset::decideBlkParams(TComPic* pic, Bool* sliceEnabled,
           exit(-1);
         }
       }
-
+      // 在几种模式中选择一个代价最小的
       if(modeCost < minCost)
       {
         minCost = modeCost;
@@ -846,10 +846,10 @@ Void TEncSampleAdaptiveOffset::decideBlkParams(TComPic* pic, Bool* sliceEnabled,
     } //mode
 
     totalCost += minCost;
-
+    // load和store的区别，store将对象状态保存到入参，load将入参状态加载到当前对象
     m_pcRDGoOnSbacCoder->load(m_pppcRDSbacCoder[ SAO_CABACSTATE_BLK_NEXT ]);
 
-    //apply reconstructed offsets
+    //apply reconstructed offsets 对重建块进行像素值补偿
     reconParams[ctuRsAddr] = codedParams[ctuRsAddr];
     reconstructBlkSAOParam(reconParams[ctuRsAddr], mergeList);
     offsetCTU(ctuRsAddr, srcYuv, resYuv, reconParams[ctuRsAddr], pic);

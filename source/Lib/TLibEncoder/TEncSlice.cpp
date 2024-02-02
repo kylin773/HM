@@ -818,7 +818,7 @@ Void TEncSlice::compressSlice( TComPic* pcPic, const Bool bCompressEntireSlice, 
 #endif
     }
     
-    // run CTU trial encoder 这里只是尝试，选出最优的熵编码方案
+    // run CTU trial encoder 这里只是尝试，选出最优的熵编码方案，每个CTU都要跑一下这个函数，找到该CTU对应的。注意DCT/DST和量化都在这个函数里面
     m_pcCuEncoder->compressCtu( pCtu );
 
       
@@ -1081,7 +1081,7 @@ Void TEncSlice::encodeSlice   ( TComPic* pcPic, TComOutputBitstream* pcSubstream
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceEnable;
 #endif
-      m_pcCuEncoder->encodeCtu( pCtu ); // 对CTU真正的编码
+      m_pcCuEncoder->encodeCtu( pCtu ); // 对CTU真正的编码，遍历每个CTU进行编码，运行一次编码一个CTU
 #if ENC_DEC_TRACE
     g_bJustDoIt = g_bEncDecTraceDisable;
 #endif
@@ -1092,7 +1092,7 @@ Void TEncSlice::encodeSlice   ( TComPic* pcPic, TComOutputBitstream* pcSubstream
       m_entropyCodingSyncContextState.loadContexts( m_pcSbacCoder );
     }
 
-    // terminate the sub-stream, if required (end of slice-segment, end of tile, end of wavefront-CTU-row):
+    // terminate the sub-stream, if required (end of slice-segment, end of tile, end of wavefront-CTU-row): 最后一个CTU时会进入分支
     if (ctuTsAddr+1 == boundingCtuTsAddr ||
          (  ctuXPosInCtus + 1 == tileXPosInCtus + currentTile.getTileWidthInCtus() &&
           ( ctuYPosInCtus + 1 == tileYPosInCtus + currentTile.getTileHeightInCtus() || wavefrontsEnabled)

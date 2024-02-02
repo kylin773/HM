@@ -140,7 +140,7 @@ Void TComOutputBitstream::write   ( UInt uiBits, UInt uiNumberOfBits )
   UInt write_bits = (m_held_bits << topword) | (uiBits >> next_num_held_bits);
 
   switch (num_total_bits >> 3)
-  {
+  {// 编码1-4字节
   case 4: m_fifo.push_back(write_bits >> 24);
   case 3: m_fifo.push_back(write_bits >> 16);
   case 2: m_fifo.push_back(write_bits >> 8);

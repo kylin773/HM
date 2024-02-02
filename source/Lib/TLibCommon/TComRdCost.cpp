@@ -58,7 +58,7 @@ TComRdCost::~TComRdCost()
 {
 }
 
-// Calculate RD functions
+// Calculate RD functions SSE 差值平方和，SAD绝对误差和
 Double TComRdCost::calcRdCost( Double numBits, Distortion distortion, DFunc eDFunc )
 {
   Double lambda = 1.0;
@@ -835,7 +835,7 @@ Distortion TComRdCost::xGetSAD32( DistParam* pcDtParam )
   {
     return TComRdCostWeightPrediction::xGetSADw( pcDtParam );
   }
-  const Pel* piOrg   = pcDtParam->pOrg;
+  const Pel* piOrg   = pcDtParam->pOrg; // 注意这里得到的像素地址指针，指向一串像素值
   const Pel* piCur   = pcDtParam->pCur;
   Int  iRows   = pcDtParam->iRows;
   Int  iSubShift  = pcDtParam->iSubShift;
@@ -858,7 +858,7 @@ Distortion TComRdCost::xGetSAD32( DistParam* pcDtParam )
   else
   {
 #endif
-  for( ; iRows != 0; iRows-=iSubStep )
+  for( ; iRows != 0; iRows-=iSubStep ) // 计算两个irowsx32像素块的每一位置像素差之和，主意这里的像素值都是用short2字节来表示
   {
     uiSum += abs( piOrg[0] - piCur[0] );
     uiSum += abs( piOrg[1] - piCur[1] );

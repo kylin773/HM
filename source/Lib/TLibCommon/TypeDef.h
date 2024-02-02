@@ -357,7 +357,7 @@ enum PartSize
   SIZE_2NxN            = 1,           ///< symmetric motion partition,  2Nx N
   SIZE_Nx2N            = 2,           ///< symmetric motion partition,   Nx2N
   SIZE_NxN             = 3,           ///< symmetric motion partition,   Nx N
-  SIZE_2NxnU           = 4,           ///< asymmetric motion partition, 2Nx( N/2) + 2Nx(3N/2)
+  SIZE_2NxnU           = 4,           ///< asymmetric motion partition, 2Nx( N/2) + 2Nx(3N/2) 非对称划分
   SIZE_2NxnD           = 5,           ///< asymmetric motion partition, 2Nx(3N/2) + 2Nx( N/2)
   SIZE_nLx2N           = 6,           ///< asymmetric motion partition, ( N/2)x2N + (3N/2)x2N
   SIZE_nRx2N           = 7,           ///< asymmetric motion partition, (3N/2)x2N + ( N/2)x2N
@@ -478,7 +478,7 @@ enum MESearchMethod
 /// coefficient scanning type used in ACS
 enum COEFF_SCAN_TYPE
 {
-  SCAN_DIAG = 0,        ///< up-right diagonal scan
+  SCAN_DIAG = 0,        ///< up-right diagonal scan 右上角对角线扫描
   SCAN_HOR  = 1,        ///< horizontal first scan
   SCAN_VER  = 2,        ///< vertical first scan
   SCAN_NUMBER_OF_TYPES = 3

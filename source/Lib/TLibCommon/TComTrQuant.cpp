@@ -868,7 +868,7 @@ Void xTrMxN(Int bitDepth, TCoeff *block, TCoeff *coeff, Int iWidth, Int iHeight,
   assert(shift_2nd >= 0);
 
   TCoeff tmp[ MAX_TU_SIZE * MAX_TU_SIZE ];
-
+  // 先做一维的
   switch (iWidth)
   {
     case 4:
@@ -894,7 +894,7 @@ Void xTrMxN(Int bitDepth, TCoeff *block, TCoeff *coeff, Int iWidth, Int iHeight,
   switch (iHeight)
   {
     case 4:
-      {
+      { // 这里是4x4 luma TU use DST
         if ((iWidth == 4) && useDST)    // Check for DCT or DST
         {
           fastForwardDst( tmp, coeff, shift_2nd );
@@ -1499,7 +1499,7 @@ Void TComTrQuant::transformNxN(       TComTU        & rTu,
 #endif
 
       assert( (pcCU->getSlice()->getSPS()->getMaxTrSize() >= uiWidth) );
-
+      // m_plTempCoeff是存放变换后的系数
       if(pcCU->getTransformSkip(uiAbsPartIdx, compID) != 0)
       {
         xTransformSkip( pcResidual, uiStride, m_plTempCoeff, rTu, compID );
@@ -1514,7 +1514,7 @@ Void TComTrQuant::transformNxN(       TComTU        & rTu,
       std::cout << g_debugCounter << ": " << uiWidth << "x" << uiHeight << " channel " << compID << " TU between transform and quantiser\n";
       printBlock(m_plTempCoeff, uiWidth, uiHeight, uiWidth);
 #endif
-
+      // 量化系数存放在rpcCoeff
       xQuant( rTu, m_plTempCoeff, rpcCoeff,
 
 #if ADAPTIVE_QP_SELECTION
@@ -1604,7 +1604,7 @@ Void TComTrQuant::invTransformNxN(      TComTU        &rTu,
     std::cout << g_debugCounter << ": " << uiWidth << "x" << uiHeight << " channel " << compID << " TU at input to dequantiser\n";
     printBlock(pcCoeff, uiWidth, uiHeight, uiWidth);
 #endif
-
+    // 反量化pcCoeff到m_plTempCoeff
     xDeQuant(rTu, pcCoeff, m_plTempCoeff, compID, cQP);
 
 #if DEBUG_TRANSFORM_AND_QUANTISE
@@ -1642,7 +1642,7 @@ Void TComTrQuant::invTransformNxN(      TComTU        &rTu,
 #else
       const Int channelBitDepth = pcCU->getSlice()->getSPS()->getBitDepth(toChannelType(compID));
 #endif
-      xIT( channelBitDepth, rTu.useDST(compID), m_plTempCoeff, pcResidual, uiStride, uiWidth, uiHeight, pcCU->getSlice()->getSPS()->getMaxLog2TrDynamicRange(toChannelType(compID)) );
+      xIT( channelBitDepth, rTu.useDST(compID), m_plTempCoeff, pcResidual, uiStride, uiWidth, uiHeight, pcCU->getSlice()->getSPS()->getMaxLog2TrDynamicRange(toChannelType(compID)) ); // IDCT/IDST 存放像素值到pcResidual中
 
 #if DEBUG_STRING
       if (psDebug)
@@ -1661,7 +1661,7 @@ Void TComTrQuant::invTransformNxN(      TComTU        &rTu,
     g_debugCounter++;
 #endif
   }
-
+  // 反Rdpcm，还不知道这是什么 PSFTODO
   invRdpcmNxN( rTu, compID, pcResidual, uiStride );
 }
 
@@ -1931,10 +1931,10 @@ Void TComTrQuant::invRdpcmNxN( TComTU& rTu, const ComponentID compID, Pel* pcRes
 
 /** Wrapper function between HM interface and core NxN forward transform (2D)
  *  \param channelBitDepth bit depth of channel
- *  \param useDST
+ *  \param useDST 从资料来看，dst用于亮度的4x4块，其他的都用dct
  *  \param piBlkResi input data (residual)
  *  \param uiStride stride of input residual data
- *  \param psCoeff output data (transform coefficients)
+ *  \param psCoeff output data (transform coefficients) 存放变换后的系数
  *  \param iWidth transform width
  *  \param iHeight transform height
  *  \param maxLog2TrDynamicRange
@@ -1951,7 +1951,7 @@ Void TComTrQuant::xT( const Int channelBitDepth, Bool useDST, Pel* piBlkResi, UI
 
   TCoeff block[ MAX_TU_SIZE * MAX_TU_SIZE ];
   TCoeff coeff[ MAX_TU_SIZE * MAX_TU_SIZE ];
-
+  // 将这块piBlkResi的像素值都赋值到block中，这里元素类型short转int
   for (Int y = 0; y < iHeight; y++)
   {
     for (Int x = 0; x < iWidth; x++)
@@ -1989,9 +1989,9 @@ Void TComTrQuant::xIT( const Int channelBitDepth, Bool useDST, TCoeff* plCoef, P
   TCoeff coeff[ MAX_TU_SIZE * MAX_TU_SIZE ];
 
   memcpy(coeff, plCoef, (iWidth * iHeight * sizeof(TCoeff)));
-
+  // 得到像素值放到类型为TCoeff整形的block中
   xITrMxN( channelBitDepth, coeff, block, iWidth, iHeight, useDST, maxLog2TrDynamicRange );
-
+  // 将block的4字节整形数拷到类型为short的pResidual中
   for (Int y = 0; y < iHeight; y++)
   {
     for (Int x = 0; x < iWidth; x++)

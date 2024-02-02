@@ -491,12 +491,12 @@ Void TComDataCU::initCtu( TComPic* pcPic, UInt ctuRsAddr )
   m_pCtuAboveRight  = NULL;
 
   UInt frameWidthInCtus = pcPic->getFrameWidthInCtus();
-  if ( m_ctuRsAddr % frameWidthInCtus )
+  if ( m_ctuRsAddr % frameWidthInCtus ) // 非第一列都有左边的CTU
   {
     m_pCtuLeft = pcPic->getCtu( m_ctuRsAddr - 1 );
   }
 
-  if ( m_ctuRsAddr / frameWidthInCtus )
+  if ( m_ctuRsAddr / frameWidthInCtus ) // 非第一行都有上边的CTU
   {
     m_pCtuAbove = pcPic->getCtu( m_ctuRsAddr - frameWidthInCtus );
   }

@@ -750,8 +750,8 @@ private:
   UInt             m_picWidthInLumaSamples;
   UInt             m_picHeightInLumaSamples;
 
-  Int              m_log2MinCodingBlockSize;
-  Int              m_log2DiffMaxMinCodingBlockSize;
+  Int              m_log2MinCodingBlockSize;        // SCU
+  Int              m_log2DiffMaxMinCodingBlockSize; // LCU
   UInt             m_uiMaxCUWidth;
   UInt             m_uiMaxCUHeight;
   UInt             m_uiMaxTotalCUDepth; ///< Total CU depth, relative to the smallest possible transform block size.

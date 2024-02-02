@@ -1224,7 +1224,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
   {
     m_pcCfg->setEncodedFlag(iGOPid, false);
   }
-
+  // 遍历GOP进行编码
   for ( Int iGOPid=0; iGOPid < m_iGopSize; iGOPid++ )
   {
     if (m_pcCfg->getEfficientFieldIRAPEnabled())
@@ -1675,7 +1675,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       for(UInt nextCtuTsAddr = 0; nextCtuTsAddr < numberOfCtusInFrame; )
       {
         m_pcSliceEncoder->precompressSlice( pcPic );
-        m_pcSliceEncoder->compressSlice   ( pcPic, false, false );
+        m_pcSliceEncoder->compressSlice   ( pcPic, false, false ); // 未开始编码，找到模式选取的最优，包括LCU最优划分，PU的最优预测和QP的最优值，这一步显然是有计算复杂度的
 
         const UInt curSliceSegmentEnd = pcSlice->getSliceSegmentCurEndCtuTsAddr();
         if (curSliceSegmentEnd < numberOfCtusInFrame)
@@ -1718,7 +1718,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       m_pcSAO->getPreDBFStatistics(pcPic);
     }
 
-    //-- Loop filter
+    //-- Loop filter 环路滤波，前方已经得到了每个CTU的最佳编码模式
     Bool bLFCrossTileBoundary = pcSlice->getPPS()->getLoopFilterAcrossTilesEnabledFlag();
     m_pcLoopFilter->setCfg(bLFCrossTileBoundary);
     if ( m_pcCfg->getDeblockingFilterMetric() )
@@ -1773,7 +1773,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
     m_pcEntropyCoder->setBitstream(NULL);
 
     pcSlice = pcPic->getSlice(0);
-
+    // 在去块滤波之后，输入是重建帧和原始帧数据, 输出是SAO数据和SAO后的重建帧. 目的是减少源图像与重构图像之间的失真
     if (pcSlice->getSPS()->getUseSAO())
     {
       Bool sliceEnabled[MAX_NUM_COMPONENT];
@@ -1851,7 +1851,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setCabacInitFlag(encCabacInitFlag);
 #endif
       tmpBitsBeforeWriting = m_pcEntropyCoder->getNumberOfWrittenBits();
-      m_pcEntropyCoder->encodeSliceHeader(pcSlice); // 编码sliceHeader
+      m_pcEntropyCoder->encodeSliceHeader(pcSlice); // 7.3.6.1 编码sliceHeader，可以看到使用的熵编码器是m_pcCavlcCoder。在编码slice的时候使用的是TEncSbac
       actualHeadBits += ( m_pcEntropyCoder->getNumberOfWrittenBits() - tmpBitsBeforeWriting );
 
       pcSlice->setFinalized(true);
@@ -1859,7 +1859,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->clearSubstreamSizes(  );
       {
         UInt numBinsCoded = 0; // 编码slice
-        m_pcSliceEncoder->encodeSlice(pcPic, &(substreamsOut[0]), numBinsCoded);
+        m_pcSliceEncoder->encodeSlice(pcPic, &(substreamsOut[0]), numBinsCoded); // 模式确定后，真正的编码，编码了numBinsCoded比特，在前面所有CTU都确定了最优的运动向量QP等信息
         binCountsInNalUnits+=numBinsCoded;
       }
 
@@ -1867,7 +1867,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         // Construct the final bitstream by concatenating substreams.
         // The final bitstream is either nalu.m_Bitstream or pcBitstreamRedirect;
         // Complete the slice header info.
-        m_pcEntropyCoder->setEntropyCoder   ( m_pcCavlcCoder );
+        m_pcEntropyCoder->setEntropyCoder   ( m_pcCavlcCoder ); // 又将熵编码器变换为m_pcCavlcCoder，完成slice header信息的编码
         m_pcEntropyCoder->setBitstream(&nalu.m_Bitstream);
         m_pcEntropyCoder->encodeTilesWPPEntryPoint( pcSlice );
 
@@ -1876,7 +1876,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         const Int numZeroSubstreamsAtStartOfSlice  = pcPic->getSubstreamForCtuAddr(pcSlice->getSliceSegmentCurStartCtuTsAddr(), false, pcSlice);
         const Int numSubstreamsToCode  = pcSlice->getNumberOfSubstreamSizes()+1;
         for ( UInt ui = 0 ; ui < numSubstreamsToCode; ui++ )
-        {
+        { // 将之前编码得到的二进制串保存到 pcBitstreamRedirect 中
           pcOut->addSubstream(&(substreamsOut[ui+numZeroSubstreamsAtStartOfSlice]));
         }
       }
@@ -1884,7 +1884,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       // If current NALU is the first NALU of slice (containing slice header) and more NALUs exist (due to multiple dependent slices) then buffer it.
       // If current NALU is the last NALU of slice and a NALU was buffered, then (a) Write current NALU (b) Update an write buffered NALU at approproate location in NALU list.
       Bool bNALUAlignedWrittenToList    = false; // used to ensure current NALU is not written more than once to the NALU list.
-      xAttachSliceDataToNalUnit(nalu, pcBitstreamRedirect);
+      xAttachSliceDataToNalUnit(nalu, pcBitstreamRedirect); // 简而言之将编码后的二进制串转为nalu
       accessUnit.push_back(new NALUnitEBSP(nalu));
       actualTotalBits += UInt(accessUnit.back()->m_nalUnitData.str().size()) * 8;
       numBytesInVclNalUnits += (std::size_t)(accessUnit.back()->m_nalUnitData.str().size());
@@ -1917,7 +1917,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
     // cabac_zero_words processing
     cabac_zero_word_padding(pcSlice, pcPic, binCountsInNalUnits, numBytesInVclNalUnits, accessUnit.back()->m_nalUnitData, m_pcCfg->getCabacZeroWordPaddingEnabled());
-
+    // 前面可能会编码运动矢量信息，compressMotion对每个CTU的运动矢量进行二次采样
     pcPic->compressMotion();
 
     //-- For time output for each slice
@@ -3062,7 +3062,7 @@ Void TEncGOP::xAttachSliceDataToNalUnit (OutputNALUnit& rNalu, TComOutputBitstre
 
   // Perform bitstream concatenation
   if (codedSliceData->getNumberOfWrittenBits() > 0)
-  {
+  { // 将编码的Slice数据放到该nalu中
     rNalu.m_Bitstream.addSubstream(codedSliceData);
   }
 

@@ -55,7 +55,7 @@
 class ContextModel3DBuffer
 {
 protected:
-  ContextModel* m_contextModel; ///< array of context models
+  ContextModel* m_contextModel; ///< array of context models 这是一个数组，可以有多个，是个三维的，可以根据get函数获取某一坐标的模型
   const UInt    m_sizeX;        ///< X size of 3D buffer
   const UInt    m_sizeXY;       ///< X times Y size of 3D buffer
   const UInt    m_sizeXYZ;      ///< total size of 3D buffer
